@@ -34,6 +34,9 @@ namespace Massive {
                     p.Value = item.ToString();
                     p.DbType = DbType.String;
                     p.Size = 4000;
+                } else if (item.GetType() == typeof(Nancy.DynamicDictionaryValue)) {
+                    var d = (Nancy.DynamicDictionaryValue)item;
+                    p.Value = d.Value;
                 } else if (item.GetType() == typeof(ExpandoObject)) {
                     var d = (IDictionary<string, object>)item;
                     p.Value = d.Values.FirstOrDefault();
@@ -72,6 +75,10 @@ namespace Massive {
             if (o.GetType() == typeof(NameValueCollection) || o.GetType().IsSubclassOf(typeof(NameValueCollection))) {
                 var nv = (NameValueCollection)o;
                 nv.Cast<string>().Select(key => new KeyValuePair<string, object>(key, nv[key])).ToList().ForEach(i => d.Add(i));
+            }else if(o.GetType() == typeof(Nancy.DynamicDictionary )){
+                var dd=(IDictionary<string,object>)o;
+                foreach (var k in dd)
+                    d.Add(k.Key, dd[k.Key]);
             } else {
                 var props = o.GetType().GetProperties();
                 foreach (var item in props) {
@@ -430,7 +437,7 @@ namespace Massive {
             foreach (var item in settings) {
                 sbKeys.AppendFormat("{0},", item.Key);
                 sbVals.AppendFormat("@{0},", counter.ToString());
-                result.AddParam(item.Value);
+                    result.AddParam(item.Value);
                 counter++;
             }
             if (counter > 0) {
